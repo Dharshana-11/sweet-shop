@@ -1,6 +1,7 @@
 from django.shortcuts import render
 # Create your views here.
 from rest_framework.decorators import api_view
+from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -26,13 +27,16 @@ def register_user(request):
         status=status.HTTP_201_CREATED
     )
 
+
 @api_view(['POST'])
 def login_user(request):
     serializer = LoginUserSerializer(data=request.data)
 
-    if not serializer.is_valid():
+    try:
+        serializer.is_valid(raise_exception=True)
+    except serializers.ValidationError:
         return Response(
-            serializer.errors,
+            {"detail": "Invalid credentials"},
             status=status.HTTP_401_UNAUTHORIZED
         )
 
