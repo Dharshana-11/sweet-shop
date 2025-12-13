@@ -1,6 +1,8 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from rest_framework.exceptions import AuthenticationFailed
 
 class RegisterUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -22,12 +24,17 @@ class LoginUserSerializer(serializers.Serializer):
 
     def validate(self, data):
         user = authenticate(
-            username = data["username"],
-            password = data["password"]
+            username=data["username"],
+            password=data["password"]
         )
 
         if user is None:
-            raise serializers.ValidationError("Invalid credentials")
+            raise AuthenticationFailed("Invalid credentials")
 
-        data["user"] = user
-        return data
+        refresh = RefreshToken.for_user(user)
+
+        return {
+            "id": user.id,
+            "username": user.username,
+            "access": str(refresh.access_token),
+        }

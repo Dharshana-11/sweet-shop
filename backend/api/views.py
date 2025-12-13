@@ -1,10 +1,8 @@
 from django.shortcuts import render
 # Create your views here.
 from rest_framework.decorators import api_view
-from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import RegisterUserSerializer, LoginUserSerializer
 
@@ -28,27 +26,8 @@ def register_user(request):
         status=status.HTTP_201_CREATED
     )
 
-
 @api_view(['POST'])
 def login_user(request):
     serializer = LoginUserSerializer(data=request.data)
-
-    try:
-        serializer.is_valid(raise_exception=True)
-    except serializers.ValidationError:
-        return Response(
-            {"detail": "Invalid credentials"},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-
-    user = serializer.validated_data["user"]
-    refresh = RefreshToken.for_user(user)
-
-    return Response(
-        {
-            "id": user.id,
-            "username": user.username,
-            "access" : str(refresh.access_token)
-        },
-        status=status.HTTP_200_OK
-    )
+    serializer.is_valid(raise_exception=True)
+    return Response(serializer.validated_data, status=status.HTTP_200_OK)
