@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'api', # Local app,
+    'api', # Local app that handles login, register,
+    'sweets', #Local app that handles sweets logic
     'rest_framework', # Third-party API
     'rest_framework.authtoken'
 ]
