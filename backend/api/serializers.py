@@ -21,7 +21,7 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 class LoginUserSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
-
+    
     def validate(self, data):
         user = authenticate(
             username=data["username"],
@@ -30,7 +30,8 @@ class LoginUserSerializer(serializers.Serializer):
 
         if user is None:
             raise AuthenticationFailed("Invalid credentials")
-
+        
+        # Generate JWT access token
         refresh = RefreshToken.for_user(user)
 
         return {
