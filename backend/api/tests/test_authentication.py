@@ -46,3 +46,23 @@ class LoginTestUser(APITestCase):
 
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+class LoginJWTTest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username = "jwtuser",
+            password = "jwt@123"
+        )
+
+        self.url = reverse("login")
+    
+    def test_login_returns_jwt_token(self):
+        data = {
+            "username" : "jwtuser",
+            "password" : "jwt@123",
+        }
+
+        response = self.client.post(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
