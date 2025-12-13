@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import RegisterUserSerializer, LoginUserSerializer
 
@@ -41,11 +42,13 @@ def login_user(request):
         )
 
     user = serializer.validated_data["user"]
+    refresh = RefreshToken.for_user(user)
 
     return Response(
         {
             "id": user.id,
-            "username": user.username
+            "username": user.username,
+            "access" : str(refresh.access_token)
         },
         status=status.HTTP_200_OK
     )
