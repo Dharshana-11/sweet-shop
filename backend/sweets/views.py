@@ -1,8 +1,9 @@
+from unicodedata import category
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-
+from django.db.models import Q
 from .models import Sweet
 from .serializers import SweetSerializer
 
@@ -26,3 +27,19 @@ def sweets_list(request):
 
     # Return created sweet data with success status
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def sweets_search(request):
+
+    queryset = Sweet.objects.all()  # fetch all sweet records
+
+    category = request.query_params.get("category")
+
+    if category:
+        queryset = queryset.filter(category__iexact = category) # Filters and stores only matching categories data (case-insensitive)
+
+    serializer = SweetSerializer(queryset, many=True)  # convert data to JSON
+    return Response(serializer.data)  # send data as response
