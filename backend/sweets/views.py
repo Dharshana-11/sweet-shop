@@ -86,3 +86,27 @@ def delete_sweet(request, id):
     sweet = get_object_or_404(Sweet, id=id)
     sweet.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def purchase_sweet(request, id):
+    sweet = get_object_or_404(Sweet, id=id)
+
+    if sweet.quantity <= 0:
+        return Response(
+            {"detail": "Sweet is out of stock"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    sweet.quantity -= 1
+    sweet.save()
+
+    return Response(
+        {
+            "id": sweet.id,
+            "name": sweet.name,
+            "quantity": sweet.quantity
+        },
+        status=status.HTTP_200_OK
+    )

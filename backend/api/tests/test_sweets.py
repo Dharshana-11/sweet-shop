@@ -188,7 +188,7 @@ class PurchaseSweetTest(APITestCase):
         )
 
         self.sweet = Sweet.objects.create(
-            name="Barfi",
+            name="Gulab Jamun",
             category="Indian",
             price=25,
             quantity=2
