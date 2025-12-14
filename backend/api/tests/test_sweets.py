@@ -123,3 +123,52 @@ class UpdateSweetTest(APITestCase):
         self.assertEqual(self.sweet.name, payload["name"])
         self.assertEqual(self.sweet.price, payload["price"])
         self.assertEqual(self.sweet.quantity, payload["quantity"])
+
+
+class DeleteSweetTest(APITestCase):
+
+    def setUp(self):
+        # Normal user
+        self.user = User.objects.create_user(
+            username="user",
+            password="user@123"
+        )
+
+        # Admin user
+        self.admin = User.objects.create_user(
+            username="admin",
+            password="admin@123",
+            is_staff=True
+        )
+
+        self.sweet = Sweet.objects.create(
+            name="Jalebi",
+            category="Indian",
+            price=20,
+            quantity=30
+        )
+
+        self.url = reverse("sweets-delete", args=[self.sweet.id])
+
+    def test_non_admin_cannot_delete_sweet(self):
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
+
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_can_delete_sweet(self):
+        refresh = RefreshToken.for_user(self.admin)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
+
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Deleted sweet ID must not exist in DB
+        self.assertFalse(
+            Sweet.objects.filter(id=self.sweet.id).exists()
+        )
