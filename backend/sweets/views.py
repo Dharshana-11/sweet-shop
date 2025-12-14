@@ -89,6 +89,13 @@ def delete_sweet(request, id):
     sweet.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
+# Helper Function for inventory
+def sweet_inventory_response(sweet):
+    return {
+        "id": sweet.id,
+        "name": sweet.name,
+        "quantity": sweet.quantity,
+    }
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -109,10 +116,32 @@ def purchase_sweet(request, id):
         sweet.refresh_from_db()
 
     return Response(
-        {
-            "id": sweet.id,
-            "name": sweet.name,
-            "quantity": sweet.quantity
-        },
+        sweet_inventory_response(sweet),
+        status=status.HTTP_200_OK
+    )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def restock_sweet(request, id):
+    amount = request.data.get("amount")
+
+    # If amt is empty, not a valid integer or lesser than zero, 400 is raised
+    try:
+        amount = int(amount)
+        if amount <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        return Response(
+            {"detail": "Valid restock amount is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    sweet = get_object_or_404(Sweet, id=id)
+
+    Sweet.objects.filter(id=id).update(quantity=F('quantity') + amount)
+    sweet.refresh_from_db()
+
+    return Response(
+        sweet_inventory_response(sweet),
         status=status.HTTP_200_OK
     )
