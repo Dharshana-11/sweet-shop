@@ -6,6 +6,7 @@ from rest_framework import status
 from django.db.models import Q
 from .models import Sweet
 from .serializers import SweetSerializer
+from django.shortcuts import get_object_or_404
 
 
 @api_view(['GET', 'POST'])
@@ -44,13 +45,35 @@ def sweets_search(request):
         queryset = queryset.filter(name_icontains = name)
 
     if category:
-        queryset = queryset.filter(category__iexact = category) # Filters and stores only matching categories data (case-insensitive)
+        # Filters and stores only matching categories data (case-insensitive)
+        queryset = queryset.filter(category__iexact = category) 
 
     if min_price:
-        queryset = queryset.filter(price__gte = min_price) # Filters sweets that have price greater than or equal to min_price
+        # Filters sweets that have price greater than or equal to min_price
+        queryset = queryset.filter(price__gte = min_price) 
 
     if max_price:
-        queryset = queryset.filter(price__lte = max_price) # Filters greater than or equal to min_price
+        # Filters greater than or equal to min_price
+        queryset = queryset.filter(price__lte = max_price) 
 
     serializer = SweetSerializer(queryset, many=True)  # convert data to JSON
-    return Response(serializer.data)  # send data as response
+    return Response(serializer.data)  
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_sweet(request, id):\
+
+    #If sweet doesn’t exist then 404 Not Found
+    sweet = get_object_or_404(Sweet, id=id)
+
+    # Pass existing object (sweet) and new data
+    serializer = SweetSerializer(
+        sweet,
+        data=request.data
+    )
+
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+
+    return Response(serializer.data, status=status.HTTP_200_OK)

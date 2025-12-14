@@ -110,7 +110,7 @@ class UpdateSweetTest(APITestCase):
     def test_update_sweet(self):
 
         data = {
-            "name" : "Rasa Malai",
+            "name" : "Rasamalai",
             "category" : "Indian",
             "price" : 30,
             "quantity" : 15,
@@ -121,6 +121,6 @@ class UpdateSweetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         self.sweet.refresh_from_db()
-        self.assertEqual(self.sweet.name, "Motichoor Ladoo")
+        self.assertEqual(self.sweet.name, "Rasamalai")
         self.assertEqual(self.sweet.price, 30)
         self.assertEqual(self.sweet.quantity, 15)
