@@ -172,3 +172,42 @@ class DeleteSweetTest(APITestCase):
         self.assertFalse(
             Sweet.objects.filter(id=self.sweet.id).exists()
         )
+
+
+class PurchaseSweetTest(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="buyer",
+            password="buy@123"
+        )
+
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
+
+        self.sweet = Sweet.objects.create(
+            name="Barfi",
+            category="Indian",
+            price=25,
+            quantity=2
+        )
+
+        self.url = reverse("sweets-purchase", args=[self.sweet.id])
+
+    def test_purchase_decreases_quantity(self):
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.sweet.refresh_from_db()
+        self.assertEqual(self.sweet.quantity, 1)
+
+    def test_purchase_fails_when_out_of_stock(self):
+        self.sweet.quantity = 0
+        self.sweet.save()
+
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
