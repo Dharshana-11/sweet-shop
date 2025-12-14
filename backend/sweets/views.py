@@ -7,6 +7,7 @@ from django.db.models import Q
 from .models import Sweet
 from .serializers import SweetSerializer
 from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAdminUser
 
 
 @api_view(['GET', 'POST'])
@@ -77,3 +78,11 @@ def update_sweet(request, id):
     serializer.save()
 
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated, IsAdminUser]) #IsAdminUser automatically checks user.is_staff is True
+def delete_sweet(request, id):
+    sweet = get_object_or_404(Sweet, id=id)
+    sweet.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
