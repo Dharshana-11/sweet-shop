@@ -85,42 +85,41 @@ class SearchSweetTest(APITestCase):
         self.assertEqual(len(response.data), 1)
 
 
-
 class UpdateSweetTest(APITestCase):
+
     def setUp(self):
         self.user = User.objects.create_user(
-            username = "sweetuser",
-            password = "sweet@123"
+            username="sweetuser",
+            password="sweet@123"
         )
 
         refresh = RefreshToken.for_user(self.user)
         self.client.credentials(
-            HTTP_AUTHORIZATION = f"Bearer {str(refresh.access_token)}"
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
         )
 
         self.sweet = Sweet.objects.create(
-            name = "Rasagulla",
-            category = "Indian",
-            price = 40,
-            quantity = 50,
+            name="Rasagulla",
+            category="Indian",
+            price=40,
+            quantity=50
         )
-        
-        self.url = reverse("sweets-update", args = [self.sweet.id])
-    
-    def test_update_sweet(self):
 
-        data = {
-            "name" : "Rasamalai",
-            "category" : "Indian",
-            "price" : 30,
-            "quantity" : 15,
+        self.url = reverse("sweets-update", args=[self.sweet.id])
+
+    def test_authenticated_user_can_update_sweet(self):
+        payload = {
+            "name": "Rasamalai",
+            "category": "Indian",
+            "price": 30,
+            "quantity": 15
         }
 
-        response = self.client.put(self.url, data, format="json")
-        
+        response = self.client.put(self.url, payload, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         self.sweet.refresh_from_db()
-        self.assertEqual(self.sweet.name, "Rasamalai")
-        self.assertEqual(self.sweet.price, 30)
-        self.assertEqual(self.sweet.quantity, 15)
+        self.assertEqual(self.sweet.name, payload["name"])
+        self.assertEqual(self.sweet.price, payload["price"])
+        self.assertEqual(self.sweet.quantity, payload["quantity"])

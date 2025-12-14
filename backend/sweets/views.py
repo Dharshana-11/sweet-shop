@@ -62,7 +62,7 @@ def sweets_search(request):
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def update_sweet(request, id):\
+def update_sweet(request, id):
 
     #If sweet doesn’t exist then 404 Not Found
     sweet = get_object_or_404(Sweet, id=id)
