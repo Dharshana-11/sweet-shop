@@ -211,3 +211,68 @@ class PurchaseSweetTest(APITestCase):
         response = self.client.post(self.url)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class RestockSweetTest(APITestCase):
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username="admin",
+            password="admin@123",
+            is_staff=True
+        )
+
+        self.user = User.objects.create_user(
+            username="normal",
+            password="user@123"
+        )
+
+        self.sweet = Sweet.objects.create(
+            name="Badhusha",
+            category="Indian",
+            price=50,
+            quantity=5
+        )
+
+        self.url = reverse("sweets-restock", args=[self.sweet.id])
+
+    def test_admin_can_restock_sweet(self):
+        refresh = RefreshToken.for_user(self.admin)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
+
+        response = self.client.post(
+            self.url,
+            {"amount": 10},
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.sweet.refresh_from_db()
+        self.assertEqual(self.sweet.quantity, 15)
+
+    def test_non_admin_cannot_restock(self):
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
+
+        response = self.client.post(
+            self.url,
+            {"amount": 5},
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_restock_requires_valid_amount(self):
+        refresh = RefreshToken.for_user(self.admin)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
+
+        response = self.client.post(self.url, {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
