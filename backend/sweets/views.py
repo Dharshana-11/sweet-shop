@@ -8,6 +8,8 @@ from .models import Sweet
 from .serializers import SweetSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAdminUser
+from django.db import transaction
+from django.db.models import F
 
 
 @api_view(['GET', 'POST'])
@@ -91,16 +93,20 @@ def delete_sweet(request, id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def purchase_sweet(request, id):
-    sweet = get_object_or_404(Sweet, id=id)
 
-    if sweet.quantity <= 0:
-        return Response(
-            {"detail": "Sweet is out of stock"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    # Transaction makes sure multiple database operations happen safely (Either all queries succeed or none of them are saved)
+    with transaction.atomic():
+        sweet = get_object_or_404(Sweet, id=id)
 
-    sweet.quantity -= 1
-    sweet.save()
+        if sweet.quantity <= 0:
+            return Response(
+                {"detail": "Sweet is out of stock"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # F expression is used to update afield based on its current value in the DB without bringing values into Python
+        Sweet.objects.filter(id=id).update(quantity=F('quantity') - 1)
+        sweet.refresh_from_db()
 
     return Response(
         {
