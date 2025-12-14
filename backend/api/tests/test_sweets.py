@@ -4,6 +4,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from sweets.models import Sweet
+
 class SweetsAuthTest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
@@ -33,7 +35,7 @@ class CreateSweetTest(APITestCase):
     
     def test_create_sweet(self):
         data = {
-            "name": "Ladoo",
+            "name": "Milk Peda",
             "category": "Indian",
             "price": 10.0,
             "quantity": 100
@@ -42,3 +44,38 @@ class CreateSweetTest(APITestCase):
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class SearchSweetTest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username = "sweetuser",
+            password = "sweet@123"
+        )
+
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION = f"Bearer {str(refresh.access_token)}"
+        )
+
+        Sweet.objects.create(
+            name = "Rasagulla",
+            category = "Indian",
+            price = 40,
+            quantity = 50,
+        )
+
+        Sweet.objects.create(
+            name = "Cake",
+            category = "Bakery",
+            price = 30,
+            quantity = 20,
+        )
+        
+        self.url = reverse("sweets-search")
+    
+    def test_search_sweet_by_category(self):
+
+        response = self.client.get(self.url + "?category=Indian")
+        self.assertEqual(len(response.data), 1) #Test only 1 record is returned for category India
+        self.assertEqual(response.data[0]["name"],"Rasagulla") #Test whether the returned sweet is Rasagulla
