@@ -79,3 +79,7 @@ class SearchSweetTest(APITestCase):
         response = self.client.get(self.url + "?category=Indian")
         self.assertEqual(len(response.data), 1) #Test only 1 record is returned for category India
         self.assertEqual(response.data[0]["name"],"Rasagulla") #Test whether the returned sweet is Rasagulla
+    
+    def test_search_sweet_by_price_range(self):
+        response = self.client.get(self.url + "?min_price=35")
+        self.assertEqual(len(response.data), 1)

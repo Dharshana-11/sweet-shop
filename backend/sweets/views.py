@@ -29,17 +29,28 @@ def sweets_list(request):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def sweets_search(request):
 
     queryset = Sweet.objects.all()  # fetch all sweet records
 
+    name = request.query_params.get("name")
     category = request.query_params.get("category")
+    min_price = request.query_params.get("min_price")
+    max_price = request.query_params.get("max_price")
+
+    if name:
+        queryset = queryset.filter(name_icontains = name)
 
     if category:
         queryset = queryset.filter(category__iexact = category) # Filters and stores only matching categories data (case-insensitive)
+
+    if min_price:
+        queryset = queryset.filter(price__gte = min_price) # Filters sweets that have price greater than or equal to min_price
+
+    if max_price:
+        queryset = queryset.filter(price__lte = max_price) # Filters greater than or equal to min_price
 
     serializer = SweetSerializer(queryset, many=True)  # convert data to JSON
     return Response(serializer.data)  # send data as response
